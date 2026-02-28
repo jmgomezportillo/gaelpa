@@ -186,7 +186,8 @@ const ClinicalForm = {
         const patient = {
             id: id,
             name: document.getElementById('paciente_id').value,
-            doctor: App.state.user.nombre, // Using name instead of email for now
+            doctor: App.state.user.nombre,
+            original_investigador: App.state.user.nombre,
             age: document.getElementById('edad').value,
             lpa: document.getElementById('lpa_val').value,
             unit: document.getElementById('lpa_unit').value,

@@ -4,10 +4,17 @@
 
 const PatientListing = {
     render(container, patients, currentUser) {
+        // Helper to compare names robustly (handles "Pablo Corral" vs "Corral Pablo")
+        const namesMatch = (nameA, nameB) => {
+            if (!nameA || !nameB) return false;
+            const normalize = str => str.toLowerCase().trim().split(/\s+/).sort().join(' ');
+            return normalize(nameA) === normalize(nameB);
+        };
+
         // Apply Row-Level Security: Medicos only see their own patients
         const visiblePatients = currentUser.rol === 'Administrador'
             ? patients
-            : patients.filter(p => p.doctor === currentUser.nombre);
+            : patients.filter(p => namesMatch(p.original_investigador, currentUser.nombre));
 
         container.innerHTML = `
             <div class="listing-view">
@@ -54,7 +61,7 @@ const PatientListing = {
                     <div class="patient-meta">
                         <span><strong>DNI:</strong> ${p.dni || 'N/A'}</span>
                         <span><strong>Edad:</strong> ${p.age} años</span>
-                        <span><strong>Dr:</strong> ${p.doctor}</span>
+                        <span><strong>Investigador:</strong> ${p.original_investigador || p.doctor}</span>
                     </div>
                 </div>
                 <div class="patient-stats" style="text-align: right;">
