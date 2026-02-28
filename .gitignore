@@ -1,0 +1,13 @@
+# Data files (Clinical data should be in Firebase)
+*.csv
+*.xlsx
+*.gsheet
+data/*.js
+
+# System files
+Thumbs.db
+.DS_Store
+
+# Temporary files
+/tmp/
+*.tmp

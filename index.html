@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaelpa - Registro Clínico Lp(a)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Main Application Shell -->
+        <header id="main-header" class="hidden">
+            <div class="header-content">
+                <div class="logo">
+                    <img src="logo_lpa.avif" alt="Gaelpa Logo" class="logo-img">
+                    <span class="logo-text">Gaelpa</span>
+                </div>
+                <nav id="main-nav">
+                    <button id="nav-form" class="nav-btn active">Registrar Paciente</button>
+                    <button id="nav-list" class="nav-btn">Mis Pacientes</button>
+                    <button id="nav-dashboard" class="nav-btn admin-only hidden">Dashboard</button>
+                    <button id="nav-users" class="nav-btn admin-only hidden">Gestionar Médicos</button>
+                </nav>
+                <div class="user-profile">
+                    <div id="user-profile-info" class="user-info-clickable" title="Mi Perfil">
+                        <span class="user-avatar">👤</span>
+                        <span id="user-name"></span>
+                    </div>
+                    <button id="logout-btn" class="logout-btn">Salir</button>
+                </div>
+            </div>
+        </header>
+
+        <main id="main-content">
+            <!-- Dynamic content injected here -->
+            <div id="loader" class="loader-container">
+                <div class="spinner"></div>
+                <p>Cargando aplicación clínica...</p>
+            </div>
+        </main>
+
+        <footer id="main-footer" class="hidden">
+            <p>&copy; 2026 Estudio Gaelpa - Grupo Argentino para el estudio de Lp(a)</p>
+        </footer>
+    </div>
+
+    <!-- Firebase SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+
+    <!-- Scripts -->
+    <script src="components/auth.js"></script>
+    <script src="components/form.js"></script>
+    <script src="components/listing.js"></script>
+    <script src="components/dashboard.js"></script>
+    <script src="components/users.js"></script>
+    <script src="components/profile_v3.js"></script>
+    <script src="data/users_data.js?t=1772195802"></script>
+    <script src="data/patients_data.js?t=1772195802"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
