@@ -2,20 +2,13 @@
  * Gaelpa App - Main Controller
  */
 
-// Firebase Configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyBzB-dLZnskB3_xqeHw77bCHpDSfWLRcsc",
-    authDomain: "gaelpa-efba4.firebaseapp.com",
-    databaseURL: "https://gaelpa-efba4-default-rtdb.firebaseio.com",
-    projectId: "gaelpa-efba4",
-    storageBucket: "gaelpa-efba4.firebasestorage.app",
-    messagingSenderId: "596533202803",
-    appId: "1:596533202803:web:cba27b1316630819d5bf06",
-    measurementId: "G-TJRKL89TW6"
-};
-
+// Firebase Configuration is now loaded from firebase-config.js
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+if (typeof firebaseConfig !== 'undefined') {
+    firebase.initializeApp(firebaseConfig);
+} else {
+    console.error('Firebase configuration not found. Please ensure firebase-config.js is loaded.');
+}
 const db = firebase.database();
 const patientsRef = db.ref('gaelpa/patients');
 const usersRef = db.ref('gaelpa/users');

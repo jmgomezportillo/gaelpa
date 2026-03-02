@@ -8,7 +8,7 @@ const Auth = {
             <div class="auth-box fade-in">
                 <div class="auth-container">
                     <div class="logo" style="justify-content: center; margin-bottom: 1.5rem;">
-                        <span class="logo-icon" style="font-size: 2.5rem;">🧬</span>
+                        <img src="logo_lpa.avif" alt="Gaelpa Logo" class="logo-img" style="height: 48px;">
                         <span class="logo-text" style="font-size: 2rem;">Gaelpa</span>
                     </div>
                     <h2>Iniciar Sesión</h2>
