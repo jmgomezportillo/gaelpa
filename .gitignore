@@ -13,4 +13,4 @@ Thumbs.db
 *.tmp
 
 # Configuration files
-firebase-config.js
+# firebase-config.js is now included as it is required for client-side Firebase
