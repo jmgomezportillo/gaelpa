@@ -2,12 +2,31 @@
  * Gaelpa App - Main Controller
  */
 
-// Firebase Configuration is now loaded from firebase-config.js
-// Initialize Firebase
-if (typeof firebaseConfig !== 'undefined') {
-    firebase.initializeApp(firebaseConfig);
+// Firebase Configuration Loader
+let firebaseConfig = window.firebaseConfig;
+
+// Fallback to localStorage if not defined by firebase-config.js
+if (!firebaseConfig) {
+    const savedConfig = localStorage.getItem('gaelpa_firebase_config');
+    if (savedConfig) {
+        try {
+            firebaseConfig = JSON.parse(savedConfig);
+            window.firebaseConfig = firebaseConfig;
+        } catch (e) {
+            console.error('Error parsing saved Firebase config:', e);
+        }
+    }
+}
+
+// Initialize Firebase if config exists
+if (firebaseConfig) {
+    try {
+        firebase.initializeApp(firebaseConfig);
+    } catch (e) {
+        console.error('Firebase Initialization Error:', e);
+    }
 } else {
-    console.error('Firebase configuration not found. Please ensure firebase-config.js is loaded.');
+    console.warn('Firebase configuration missing. Showing setup assistant...');
 }
 const db = firebase.database();
 const patientsRef = db.ref('gaelpa/patients');
@@ -26,19 +45,14 @@ const App = {
         console.log('Gaelpa App initializing...');
         this.renderLoader();
 
-        // Load mock data or data from storage
-        this.loadInitialData();
-
-        // Check session (mock)
-        const savedUser = localStorage.getItem('gaelpa_user');
-        if (savedUser) {
-            this.state.user = JSON.parse(savedUser);
-            this.state.currentView = 'form'; // Default view for logged in
-            this.showMainUI();
-        } else {
-            this.state.currentView = 'login';
-            this.showLogin();
+        // Check if configuration is missing
+        if (!window.firebaseConfig) {
+            this.showSetupAssistant();
+            return;
         }
+
+        // Load data from storage or cloud
+        this.loadInitialData();
 
         this.attachEvents();
     },
@@ -47,23 +61,30 @@ const App = {
         console.log('Fetching data from Firebase...');
 
         try {
+            // Check session while loading data
+            const savedUser = localStorage.getItem('gaelpa_user');
+            if (savedUser) {
+                this.state.user = JSON.parse(savedUser);
+            }
+
             // Load Users from Firebase
             const usersSnapshot = await usersRef.once('value');
             const firebaseUsers = usersSnapshot.val();
 
             if (firebaseUsers) {
-                // Convert object to array if necessary (Firebase often returns objects with IDs as keys)
                 this.state.users = Object.values(firebaseUsers);
             } else {
-                // Initial migration: If Firebase is empty, use legacy data
-                console.log('No users in Firebase. Migrating legacy users...');
-                this.state.users = typeof LEGACY_USERS !== 'undefined' ? LEGACY_USERS : [
+                console.log('No users in Firebase. Checking legacy data...');
+                const legacyUsers = typeof LEGACY_USERS !== 'undefined' ? LEGACY_USERS : [
                     { nombre: 'Admin Gaelpa', usuario: 'admin', password: 'admin', rol: 'Administrador' }
                 ];
-                // Save to Firebase for the first time
-                this.state.users.forEach(u => {
-                    usersRef.child(u.usuario).set(u);
-                });
+                this.state.users = legacyUsers;
+
+                if (this.state.users.length > 0) {
+                    this.state.users.forEach(u => {
+                        usersRef.child(u.usuario).set(u);
+                    });
+                }
             }
 
             // Load Patients from Firebase
@@ -73,33 +94,75 @@ const App = {
             if (firebasePatients) {
                 this.state.patients = Object.values(firebasePatients);
             } else {
-                // Initial migration for patients
-                console.log('No patients in Firebase. Migrating legacy patients...');
+                console.log('No patients in Firebase. Checking legacy patients...');
                 this.state.patients = typeof LEGACY_PATIENTS !== 'undefined' ? LEGACY_PATIENTS : [];
 
-                // Optional: Migrate legacy patients to Firebase on first load
-                // (Warning: this could be slow for 3200 records, but it's a one-time thing)
-                if (this.state.patients.length > 0) {
+                if (this.state.patients.length > 0 && this.state.patients.length < 500) {
                     this.state.patients.forEach((p, index) => {
-                        // Use a unique ID or index for now
                         const id = p.id || `patient_${Date.now()}_${index}`;
                         patientsRef.child(id).set(p);
                     });
                 }
             }
 
-            console.log(`Loaded ${this.state.patients.length} patients and ${this.state.users.length} users from cloud.`);
+            console.log(`Loaded ${this.state.patients.length} patients and ${this.state.users.length} users.`);
 
-            // Re-render current view if data changes
-            if (this.state.currentView !== 'login') {
-                this.switchView(this.state.currentView);
+            // Redirect based on session
+            if (this.state.user) {
+                this.state.currentView = 'form';
+                this.showMainUI();
+            } else {
+                this.state.currentView = 'login';
+                this.showLogin();
             }
+
         } catch (error) {
             console.error('Error loading data from Firebase:', error);
-            // Fallback to local if error (though cloud is the source of truth now)
+            this.state.currentView = 'login';
+            this.showLogin();
         } finally {
             this.state.isLoading = false;
         }
+    },
+
+    showSetupAssistant() {
+        const main = document.getElementById('main-content');
+        main.innerHTML = `
+            <div class="auth-box fade-in">
+                <div class="auth-container" style="max-width: 500px;">
+                    <div class="logo" style="justify-content: center; margin-bottom: 1.5rem;">
+                        <img src="logo_lpa.avif" alt="Gaelpa Logo" class="logo-img" style="height: 48px;">
+                        <span class="logo-text" style="font-size: 2rem;">Gaelpa</span>
+                    </div>
+                    <h2>Configuración Inicial</h2>
+                    <p>No se encontró la configuración de Firebase en el servidor. Por favor, pega tu objeto de configuración aquí para empezar.</p>
+                    
+                    <div class="form-group">
+                        <label for="fb-config-input">Objeto firebaseConfig (JSON)</label>
+                        <textarea id="fb-config-input" rows="8" placeholder='{ "apiKey": "...", "authDomain": "...", ... }' style="font-family: monospace; font-size: 0.85rem;"></textarea>
+                    </div>
+                    
+                    <div id="config-error" class="error-msg" style="display:none;">El formato del objeto no es válido. Asegúrate de que sea un JSON válido.</div>
+                    
+                    <button id="save-config-btn" class="btn-primary">Guardar y Continuar</button>
+                    
+                    <div style="margin-top: 1.5rem; text-align: left; font-size: 0.85rem; color: var(--text-muted);">
+                        <p><strong>Nota:</strong> Esta configuración se guardará solo en este navegador (localStorage). Esto permite que la web funcione de forma privada en servidores públicos como GitHub Pages.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('save-config-btn').addEventListener('click', () => {
+            const input = document.getElementById('fb-config-input').value;
+            try {
+                const config = JSON.parse(input);
+                localStorage.setItem('gaelpa_firebase_config', JSON.stringify(config));
+                window.location.reload();
+            } catch (e) {
+                document.getElementById('config-error').style.display = 'block';
+            }
+        });
     },
 
     attachEvents() {
