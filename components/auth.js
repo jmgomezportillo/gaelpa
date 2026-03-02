@@ -16,14 +16,14 @@ const Auth = {
                     
                     <div id="auth-error" class="error-msg">Credenciales incorrectas. Intente de nuevo.</div>
                     
-                    <form id="login-form">
+                    <form id="login-form" autocomplete="on">
                         <div class="form-group">
                             <label for="username">Usuario</label>
-                            <input type="text" id="username" placeholder="Tu nombre de usuario" required>
+                            <input type="text" id="username" name="username" autocomplete="username" placeholder="Tu nombre de usuario" required>
                         </div>
                         <div class="form-group">
                             <label for="password">Contraseña</label>
-                            <input type="password" id="password" placeholder="••••••••" required>
+                            <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••" required>
                         </div>
                         <button type="submit" class="btn-primary">Entrar al Sistema</button>
                     </form>
