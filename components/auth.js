@@ -58,7 +58,11 @@ const Auth = {
             localStorage.setItem('gaelpa_user', JSON.stringify(sessionUser));
 
             App.state.user = sessionUser;
-            App.showMainUI();
+
+            // Give the browser a moment to record the form submission for the password manager
+            setTimeout(() => {
+                App.showMainUI();
+            }, 100);
         } else {
             errorMsg.style.display = 'block';
             errorMsg.classList.add('fade-in');
