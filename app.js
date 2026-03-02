@@ -18,19 +18,8 @@ if (!firebaseConfig) {
     }
 }
 
-// Initialize Firebase if config exists
-if (firebaseConfig) {
-    try {
-        firebase.initializeApp(firebaseConfig);
-    } catch (e) {
-        console.error('Firebase Initialization Error:', e);
-    }
-} else {
-    console.warn('Firebase configuration missing. Showing setup assistant...');
-}
-const db = firebase.database();
-const patientsRef = db.ref('gaelpa/patients');
-const usersRef = db.ref('gaelpa/users');
+// Global references (will be initialized in App.init or loadInitialData)
+let db, patientsRef, usersRef;
 
 const App = {
     state: {
@@ -61,6 +50,14 @@ const App = {
         console.log('Fetching data from Firebase...');
 
         try {
+            // Late initialization of Firebase
+            if (!firebase.apps.length) {
+                firebase.initializeApp(window.firebaseConfig);
+            }
+            db = firebase.database();
+            patientsRef = db.ref('gaelpa/patients');
+            usersRef = db.ref('gaelpa/users');
+
             // Check session while loading data
             const savedUser = localStorage.getItem('gaelpa_user');
             if (savedUser) {
