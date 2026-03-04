@@ -19,7 +19,8 @@ const App = {
         currentView: 'login',
         patients: [],
         users: [],
-        isLoading: true
+        isLoading: true,
+        isPatientsLoading: false
     },
 
     init() {
@@ -36,64 +37,102 @@ const App = {
         console.log('Fetching data from Firebase...');
 
         try {
-            // Check session
+            // 1. FAST LOAD: Check session and users
             const savedUser = localStorage.getItem('gaelpa_user');
             if (savedUser) {
                 this.state.user = JSON.parse(savedUser);
             }
 
-            // Load Users
+            // Load Users (Essential for auth)
             const usersSnapshot = await usersRef.once('value');
             const firebaseUsers = usersSnapshot.val();
-
             if (firebaseUsers) {
-                this.state.users = Object.values(firebaseUsers);
-            } else {
-                console.log('No users in Firebase. Checking legacy data...');
-                const legacyUsers = typeof LEGACY_USERS !== 'undefined' ? LEGACY_USERS : [
-                    { nombre: 'Admin Gaelpa', usuario: 'admin', password: 'admin', rol: 'Administrador' }
-                ];
-                this.state.users = legacyUsers;
-                if (this.state.users.length > 0) {
-                    this.state.users.forEach(u => usersRef.child(u.usuario).set(u));
-                }
-            }
-
-            // Load Patients
-            const patientsSnapshot = await patientsRef.once('value');
-            const firebasePatients = patientsSnapshot.val();
-
-            if (firebasePatients) {
-                this.state.patients = Object.values(firebasePatients);
-            } else {
-                console.log('No patients in Firebase. Checking legacy patients...');
-                this.state.patients = typeof LEGACY_PATIENTS !== 'undefined' ? LEGACY_PATIENTS : [];
-                // Only migrate if it's a small set to avoid performance issues on first load
-                if (this.state.patients.length > 0 && this.state.patients.length < 500) {
-                    this.state.patients.forEach((p, index) => {
-                        const id = p.id || `patient_${Date.now()}_${index}`;
-                        patientsRef.child(id).set(p);
+                // Flatten users if nested (edge case fix)
+                const usersList = [];
+                const flatten = (obj) => {
+                    Object.values(obj).forEach(val => {
+                        if (val && val.usuario) usersList.push(val);
+                        else if (typeof val === 'object' && val !== null) flatten(val);
                     });
+                };
+                flatten(firebaseUsers);
+                this.state.users = usersList;
+
+                // 2. REFRESH SESSION: Update logged in user with fresh data from DB
+                if (this.state.user) {
+                    const freshUser = this.state.users.find(u => u.usuario === this.state.user.usuario);
+                    if (freshUser) {
+                        this.state.user = freshUser;
+                        localStorage.setItem('gaelpa_user', JSON.stringify(freshUser));
+                        console.log('Session refreshed with fresh DB data.');
+                    }
                 }
             }
 
-            console.log(`Loaded ${this.state.patients.length} patients and ${this.state.users.length} users.`);
-
-            // UI Flow
+            // 2. INITIAL UI FLOW: Show app structure immediately if user is logged in
             if (this.state.user) {
-                this.state.currentView = 'form';
+                this.state.isLoading = false;
                 this.showMainUI();
+
+                // 3. SELECTIVE PATIENT LOAD
+                this.loadPatients();
             } else {
                 this.state.currentView = 'login';
+                this.state.isLoading = false;
                 this.showLogin();
             }
 
         } catch (error) {
             console.error('Error loading data from Firebase:', error);
-            this.state.currentView = 'login';
-            this.showLogin();
-        } finally {
             this.state.isLoading = false;
+            this.showLogin();
+        }
+    },
+
+    async loadPatients() {
+        if (!this.state.user) return;
+
+        console.log(`Starting data fetch for ${this.state.user.rol}...`);
+        this.state.isPatientsLoading = true;
+
+        try {
+            let query;
+            if (this.state.user.rol === 'Administrador') {
+                // Admins see everything (background load)
+                query = patientsRef;
+            } else {
+                // Medicos only see their own - FAST FILTERED LOAD
+                query = patientsRef.orderByChild('investigador_principal').equalTo(this.state.user.nombre);
+            }
+
+            const snapshot = await query.once('value');
+            const data = snapshot.val();
+
+            this.state.isPatientsLoading = false;
+
+            if (data) {
+                this.state.patients = Object.values(data);
+                console.log(`Loaded ${this.state.patients.length} patients.`);
+            } else if (this.state.user.rol !== 'Administrador') {
+                // Fallback if index missing or query failed
+                console.warn('Selective query returned no data. Falling back to full fetch for Medico...');
+                const fullSnapshot = await patientsRef.once('value');
+                const allData = fullSnapshot.val();
+                if (allData) {
+                    this.state.patients = Object.values(allData).filter(p =>
+                        (p.investigador_principal || p.original_investigador) === this.state.user.nombre
+                    );
+                    console.log(`Loaded ${this.state.patients.length} patients via fallback.`);
+                }
+            }
+
+            // Refresh current view if it depends on patients
+            if (['list', 'dashboard'].includes(this.state.currentView)) {
+                this.switchView(this.state.currentView);
+            }
+        } catch (error) {
+            console.error('Error fetching patients:', error);
+            this.state.isPatientsLoading = false;
         }
     },
 
@@ -167,8 +206,13 @@ const App = {
 
             switch (view) {
                 case 'form': ClinicalForm.render(container); break;
-                case 'list': PatientListing.render(container, this.state.patients, this.state.user); break;
-                case 'dashboard': Dashboard.render(container, this.state.patients); break;
+                case 'list':
+                    PatientListing.render(container, this.state.patients, this.state.user);
+                    if (this.state.user.rol === 'Administrador') {
+                        PatientListing.attachExportEvents(this.state.patients, this.state.users);
+                    }
+                    break;
+                case 'dashboard': Dashboard.render(container, this.state.patients, this.state.users); break;
                 case 'users': UserManagement.render(container, this.state.users); break;
                 case 'profile': UserProfile.render(container, this.state.user); break;
             }

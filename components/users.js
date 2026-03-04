@@ -50,6 +50,19 @@ const UserManagement = {
                 <div id="users-list-container">
                     ${this.renderUserList(users)}
                 </div>
+
+                <!-- Maintenance Section -->
+                <div class="form-section" style="margin-top: 4rem; border-top: 2px solid #fee2e2; padding-top: 2rem; background: #fffaf0;">
+                    <h3 style="color: #991b1b;">⚠️ Mantenimiento del Sistema</h3>
+                    <p style="font-size: 0.875rem; color: #7f1d1d; margin-bottom: 1.5rem;">
+                        Utilice estas herramientas con precaución. Las acciones son permanentes.
+                    </p>
+                    <div style="display: flex; gap: 1rem;">
+                        <button id="reset-patients-btn" class="btn-secondary" style="border-color: #f87171; color: #b91c1c;">
+                            Reiniciar Base de Datos de Pacientes
+                        </button>
+                    </div>
+                </div>
             </div>
         `;
 
@@ -71,9 +84,9 @@ const UserManagement = {
                     </div>
                 </div>
                 <div class="actions">
-                    ${user.usuario !== App.state.user.usuario ? `
-                        <button class="logout-btn delete-user-btn" data-user="${user.usuario}" style="color: #b91c1c;">Eliminar</button>
-                    ` : '<span style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">(Tú)</span>'}
+                    ${user.usuario === App.state.user.usuario ? `
+                        <span style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">(Tú)</span>
+                    ` : ''}
                 </div>
             </div>
         `).join('');
@@ -101,15 +114,29 @@ const UserManagement = {
             this.handleAddUser();
         });
 
-        // Delete buttons
-        document.querySelectorAll('.delete-user-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const username = e.target.getAttribute('data-user');
-                if (confirm(`¿Está seguro que desea eliminar al usuario @${username}?`)) {
-                    this.handleDeleteUser(username);
+
+        // Reset database button
+        const resetBtn = document.getElementById('reset-patients-btn');
+        resetBtn?.addEventListener('click', () => {
+            if (confirm('¿ESTÁ SEGURO? Esta acción ELIMINARÁ PERMANENTEMENTE todos los pacientes actuales.')) {
+                if (confirm('CONFIRMACIÓN FINAL: Se borrarán todos los registros de pacientes para iniciar con la nueva estructura.')) {
+                    this.handleResetPatients();
                 }
-            });
+            }
         });
+    },
+
+    handleResetPatients() {
+        patientsRef.remove()
+            .then(() => {
+                App.state.patients = [];
+                alert('Base de datos de pacientes reiniciada con éxito.');
+                App.switchView('list');
+            })
+            .catch(error => {
+                console.error('Error resetting patients:', error);
+                alert('Error al reiniciar la base de datos.');
+            });
     },
 
     handleAddUser() {
