@@ -100,14 +100,15 @@ nav::-webkit-scrollbar {
 .nav-btn {
     background: transparent;
     border: none;
-    padding: 0.5rem 0.75rem;
-    font-weight: 500;
+    padding: 0.6rem 0.8rem;
+    font-weight: 600;
     color: var(--text-muted);
     cursor: pointer;
     border-radius: 0.5rem;
     transition: all 0.2s ease;
     white-space: nowrap;
     font-size: 0.875rem;
+    flex-shrink: 0;
 }
 
 .nav-btn:hover {
