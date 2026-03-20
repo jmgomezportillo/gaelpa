@@ -16,7 +16,7 @@ const Auth = {
                     
                     <div id="auth-error" class="error-msg">Credenciales incorrectas. Intente de nuevo.</div>
                     
-                    <form id="login-form" autocomplete="on">
+                    <form id="login-form" method="POST" action="#" autocomplete="on">
                         <div class="form-group">
                             <label for="username">Usuario</label>
                             <input type="text" id="username" name="username" autocomplete="username" placeholder="Tu nombre de usuario" required>
@@ -25,7 +25,7 @@ const Auth = {
                             <label for="password">Contraseña</label>
                             <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••" required>
                         </div>
-                        <button type="submit" class="btn-primary">Entrar al Sistema</button>
+                        <button type="submit" id="login-btn" class="btn-primary">Entrar al Sistema</button>
                     </form>
                     
                     <div style="margin-top: 2rem; font-size: 0.8rem; color: var(--text-muted);">
@@ -52,6 +52,12 @@ const Auth = {
 
         if (user) {
             errorMsg.style.display = 'none';
+            const loginBtn = document.getElementById('login-btn');
+            if (loginBtn) {
+                loginBtn.disabled = true;
+                loginBtn.textContent = 'Iniciando sesión...';
+            }
+
             // Save session
             const sessionUser = { ...user };
             delete sessionUser.password;
@@ -62,7 +68,7 @@ const Auth = {
             // Give the browser a moment to record the form submission for the password manager
             setTimeout(() => {
                 App.showMainUI();
-            }, 100);
+            }, 500);
         } else {
             errorMsg.style.display = 'block';
             errorMsg.classList.add('fade-in');
