@@ -14,7 +14,7 @@ const ClinicalForm = {
                         <div class="grid-3">
                              <div class="form-group">
                                 <label for="investigador">Investigador Principal</label>
-                                <input type="text" id="investigador" value="" placeholder="Nombre del médico" style="background: #fff;">
+                                <input type="text" id="investigador" value="${App.state.user.nombre}" readonly style="background: #f5f5f5; cursor: not-allowed;">
                             </div>
                             <div class="form-group">
                                 <label for="region">Región</label>
@@ -518,7 +518,7 @@ const ClinicalForm = {
             "col_total": document.getElementById('col_total').value || "S/D",
             "hdl": document.getElementById('hdl').value || "S/D",
             "ldl": document.getElementById('ldl').value || "S/D",
-            "trigliceridos": document.getElementById('trigliceridos').value || "S/D",
+            "trigliceridos": document.getElementById('tg').value || "S/D",
             "creatinina": document.getElementById('creatinina').value || "S/D",
             "tsh": document.getElementById('tsh').value || "S/D",
             "antiagregacion": this.getCheckedValues('antiagregacion') || "Ninguna",
