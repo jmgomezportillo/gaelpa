@@ -223,7 +223,6 @@ const App = {
         localStorage.removeItem('gaelpa_user');
         this.state.user = null;
         this.state.patients = [];
-        this.state.users = [];
         this.state.currentView = 'login';
         this.showLogin();
     }
