@@ -1,3 +1,17 @@
+const PATIENT_COLUMNS = [
+    "marca_temporal", "investigador_principal", "region", "paciente_id", "dni", 
+    "cod_postal", "telefono", "email", "edad", "genero", "raza_etnia", 
+    "peso", "altura", "tas", "tad", "tabaquismo", "diabetes", 
+    "hipertension", "menopausia", "hipotiroidismo", "medicado_hipotiroidismo", 
+    "enf_autoinmunes", "hf", "af_ecv_precoz", "antec_isquemia", 
+    "enf_art_periferica", "acv_previo", "ateromatosis", "score_calcio", 
+    "score_calcio_valor", "ateromatosis_carotidea", "ateromatosis_femoral", 
+    "estenosis_aortica", "hba1c", "lpa", "lpa_unit", "apob", "apob_unit", 
+    "col_total", "hdl", "ldl", "trigliceridos", "creatinina", "tsh", 
+    "antiagregacion", "toma_estatina", "estatina_tipo", "estatina_dosis", 
+    "niacina", "ezetimibe", "acid_bempedoico", "icosapento", "ipcsk9", "inclisiran"
+];
+
 const PatientListing = {
     render(container, patients, currentUser) {
         // Apply Row-Level Security: Medicos only see their own patients
@@ -64,7 +78,7 @@ const PatientListing = {
 
     attachExportEvents(patients, users) {
         document.getElementById('export-patients-btn')?.addEventListener('click', () => {
-            this.exportToExcel(patients, 'Gaelpa_Pacientes_Completo');
+            this.exportToExcel(patients, 'Gaelpa_Pacientes_Completo', PATIENT_COLUMNS);
         });
 
         document.getElementById('export-users-btn')?.addEventListener('click', () => {
@@ -72,7 +86,7 @@ const PatientListing = {
         });
     },
 
-    exportToExcel(data, filename) {
+    exportToExcel(data, filename, header = null) {
         if (!data || data.length === 0) {
             alert('No hay datos para exportar.');
             return;
@@ -80,8 +94,10 @@ const PatientListing = {
 
         try {
             // Create a worksheet from the data array
-            // We ensure we only export data properties, ignoring Firebase metadata if needed
-            const ws = XLSX.utils.json_to_sheet(data);
+            // We ensure we only export data properties with specific order if header is provided
+            const ws = header 
+                ? XLSX.utils.json_to_sheet(data, { header: header })
+                : XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Datos");
 
