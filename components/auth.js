@@ -16,7 +16,7 @@ const Auth = {
                     
                     <div id="auth-error" class="error-msg">Credenciales incorrectas. Intente de nuevo.</div>
                     
-                    <form id="login-form" method="POST" action="#" autocomplete="on">
+                    <form id="login-form" method="POST" action="#" target="hidden_iframe" autocomplete="on">
                         <div class="form-group">
                             <label for="username">Usuario</label>
                             <input type="text" id="username" name="username" autocomplete="username" placeholder="Tu nombre de usuario" required>
@@ -28,6 +28,8 @@ const Auth = {
                         <button type="submit" id="login-btn" class="btn-primary">Entrar al Sistema</button>
                     </form>
                     
+                    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none"></iframe>
+                    
                     <div style="margin-top: 2rem; font-size: 0.8rem; color: var(--text-muted);">
                         <p>¿Problemas de acceso? Contacte al administrador.</p>
                     </div>
@@ -37,39 +39,48 @@ const Auth = {
 
         const form = document.getElementById('login-form');
         form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleLogin();
+            const username = document.getElementById('username').value.trim().toLowerCase();
+            const password = document.getElementById('password').value;
+            
+            // Check credentials synchronously
+            const user = App.state.users.find(u => u.usuario === username && u.password === password);
+
+            if (user) {
+                // SUCCESS: DO NOT prevent default to allow browser to see a "real" submission to the iframe
+                this.handleSuccess(user);
+            } else {
+                // FAILURE: Prevent submission and show error
+                e.preventDefault();
+                this.showError();
+            }
         });
     },
 
-    handleLogin() {
-        const username = document.getElementById('username').value.trim().toLowerCase();
-        const password = document.getElementById('password').value;
+    handleSuccess(user) {
         const errorMsg = document.getElementById('auth-error');
+        const loginBtn = document.getElementById('login-btn');
+        
+        if (errorMsg) errorMsg.style.display = 'none';
+        if (loginBtn) {
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Iniciando sesión...';
+        }
 
-        // Check against app state (which now contains legacy users)
-        const user = App.state.users.find(u => u.usuario === username && u.password === password);
+        // Save session
+        const sessionUser = { ...user };
+        delete sessionUser.password;
+        localStorage.setItem('gaelpa_user', JSON.stringify(sessionUser));
+        App.state.user = sessionUser;
 
-        if (user) {
-            errorMsg.style.display = 'none';
-            const loginBtn = document.getElementById('login-btn');
-            if (loginBtn) {
-                loginBtn.disabled = true;
-                loginBtn.textContent = 'Iniciando sesión...';
-            }
+        // Transition with delay to allow browser to process the submission
+        setTimeout(() => {
+            App.showMainUI();
+        }, 600);
+    },
 
-            // Save session
-            const sessionUser = { ...user };
-            delete sessionUser.password;
-            localStorage.setItem('gaelpa_user', JSON.stringify(sessionUser));
-
-            App.state.user = sessionUser;
-
-            // Give the browser a moment to record the form submission for the password manager
-            setTimeout(() => {
-                App.showMainUI();
-            }, 500);
-        } else {
+    showError() {
+        const errorMsg = document.getElementById('auth-error');
+        if (errorMsg) {
             errorMsg.style.display = 'block';
             errorMsg.classList.add('fade-in');
         }
