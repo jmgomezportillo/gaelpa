@@ -73,9 +73,6 @@ const App = {
             if (this.state.user) {
                 this.state.isLoading = false;
                 this.showMainUI();
-
-                // 3. SELECTIVE PATIENT LOAD
-                this.loadPatients();
             } else {
                 this.state.currentView = 'login';
                 this.state.isLoading = false;
@@ -187,6 +184,9 @@ const App = {
         }
 
         this.switchView(this.state.currentView);
+        
+        // Trigger patient load for the current user
+        this.loadPatients();
     },
 
     switchView(view) {
@@ -222,6 +222,8 @@ const App = {
     logout() {
         localStorage.removeItem('gaelpa_user');
         this.state.user = null;
+        this.state.patients = [];
+        this.state.users = [];
         this.state.currentView = 'login';
         this.showLogin();
     }
