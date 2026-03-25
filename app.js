@@ -20,7 +20,8 @@ const App = {
         patients: [],
         users: [],
         isLoading: true,
-        isPatientsLoading: false
+        isPatientsLoading: false,
+        isDatabaseError: false
     },
 
     init() {
@@ -37,6 +38,11 @@ const App = {
         console.log('Fetching data from Firebase...');
 
         try {
+            // 0. AUTHENTICATION: Sign in anonymously to pass database rules (auth != null)
+            console.log('Signing in anonymously to gain database access...');
+            await firebase.auth().signInAnonymously();
+            console.log('Successfully signed in anonymously.');
+
             // 1. FAST LOAD: Check session and users
             const savedUser = localStorage.getItem('gaelpa_user');
             if (savedUser) {
@@ -67,8 +73,11 @@ const App = {
                         console.log('Session refreshed with fresh DB data.');
                     }
                 }
+            } else {
+                console.warn('No users found in Firebase.');
+                this.state.isDatabaseError = true;
             }
-
+            
             // 2. INITIAL UI FLOW: Show app structure immediately if user is logged in
             if (this.state.user) {
                 this.state.isLoading = false;
@@ -82,6 +91,7 @@ const App = {
         } catch (error) {
             console.error('Error loading data from Firebase:', error);
             this.state.isLoading = false;
+            this.state.isDatabaseError = true;
             this.showLogin();
         }
     },
